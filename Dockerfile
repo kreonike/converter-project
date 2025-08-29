@@ -12,13 +12,12 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # Step 5: Create the downloads directory
-# No need to change permissions as we are running as root
 RUN mkdir -p /app/downloads
 
 # Step 6: Expose the port the app runs on
 EXPOSE 8000
 
 # Step 7: Define the command to run the application.
-# It will be executed as root, which has full access to the path.
-CMD ["gunicorn", "--workers", "4", "--worker-class", "uvicorn.workers.UvicornWorker", "--bind", "0.0.0.0:8000", "main:app"]
+# We run gunicorn as a Python module to bypass all PATH issues.
+CMD ["python", "-m", "gunicorn", "--workers", "4", "--worker-class", "uvicorn.workers.UvicornWorker", "--bind", "0.0.0.0:8000", "main:app"]
 
