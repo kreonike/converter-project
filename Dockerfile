@@ -1,26 +1,30 @@
-# Step 1: Use an official Python runtime as a parent image
-FROM python:3.11-slim
+# Step 1: Use a more stable and complete base image to avoid path issues
+FROM python:3.11-bullseye
 
-# Step 2: Set the working directory
+# Step 2: Set environment variables for Python
+ENV PYTHONDONTWRITEBYTECODE 1
+ENV PYTHONUNBUFFERED 1
+
+# Step 3: Set the working directory
 WORKDIR /app
 
-# Step 3: Upgrade pip for compatibility
+# Step 4: Upgrade pip
 RUN pip install --no-cache-dir --upgrade pip
 
-# Step 4: Copy requirements and install all dependencies
+# Step 5: Copy and install dependencies
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Step 5: Copy the rest of the application code
+# Step 6: Copy the rest of the application code
 COPY . .
 
-# Step 6: Create the downloads directory
+# Step 7: Create the downloads directory
 RUN mkdir -p /app/downloads
 
-# Step 7: Expose the port the app runs on
+# Step 8: Expose the port the app runs on
 EXPOSE 8000
 
-# Step 8: Define the command to run the application.
-# This runs gunicorn as a module, which is the most reliable way.
+# Step 9: Define the command to run the application
+# This runs gunicorn as a module, which is the most reliable way
 CMD ["python", "-m", "gunicorn", "--workers", "4", "--worker-class", "uvicorn.workers.UvicornWorker", "--bind", "0.0.0.0:8000", "main:app"]
 
