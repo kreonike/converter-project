@@ -1,19 +1,20 @@
 # Step 1: Use a more stable and complete base image to avoid path issues
 FROM python:3.11-bullseye
 
-# Step 2: Set environment variables for Python
+# Step 2: Set environment variables to ensure Python can find packages
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
+ENV PYTHONPATH="/usr/local/lib/python3.11/site-packages"
 
 # Step 3: Set the working directory
 WORKDIR /app
 
-# Step 4: Upgrade pip
-RUN pip install --no-cache-dir --upgrade pip
-
-# Step 5: Copy and install dependencies
+# Step 4: Copy requirements file first for better caching
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+
+# Step 5: Upgrade pip and install dependencies using the most robust method
+RUN python -m pip install --no-cache-dir --upgrade pip && \
+    python -m pip install --no-cache-dir -r requirements.txt
 
 # Step 6: Copy the rest of the application code
 COPY . .
