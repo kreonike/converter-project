@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Онлайн Конвертер</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background-color: #f0f2f5;
+            color: #333;
+        }
+        .container {
+            background-color: #ffffff;
+            padding: 2rem 3rem;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            width: 90%;
+            max-width: 600px;
+            border: 1px solid #e0e0e0;
+            transition: all 0.3s ease;
+        }
+        h1 { color: #1a1a1a; margin-bottom: 0.5rem; }
+        p { color: #666; margin-bottom: 2rem; }
+
+        #tool-selection { display: block; }
+        .tool-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+        .tool-card {
+            border: 1px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 1.5rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .tool-card:hover {
+            border-color: #007bff;
+            box-shadow: 0 4px 12px rgba(0, 123, 255, 0.1);
+            transform: translateY(-5px);
+        }
+        .tool-icon { font-size: 2.5rem; margin-bottom: 1rem; }
+        .tool-card h3 { margin: 0; color: #007bff; }
+
+        .converter-section { display: none; }
+        .back-button {
+            display: inline-block;
+            margin-bottom: 1.5rem;
+            padding: 0.5rem 1rem;
+            background-color: #6c757d;
+            color: white;
+            border-radius: 6px;
+            text-decoration: none;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .back-button:hover { background-color: #5a6268; }
+
+        .upload-area {
+            border: none;
+            background-color: transparent;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            cursor: pointer;
+            transition: background-color 0.2s, border-color 0.2s;
+        }
+        .upload-area.dragover {
+            background-color: #e7f3fe;
+        }
+        input[type="file"] { display: none; }
+        .upload-icon svg { width: 48px; height: 48px; color: #007bff; }
+        .upload-text { margin-top: 1rem; font-weight: 500; }
+
+        .preview-grid {
+            display: grid;
+            gap: 1rem;
+            margin-top: 1.5rem;
+            padding: 1rem;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+        }
+        .preview-grid--jpg {
+             grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+        }
+        .preview-grid--word {
+             grid-template-columns: 1fr;
+        }
+
+        .preview-item {
+            position: relative;
+            border-radius: 8px;
+            overflow: hidden;
+            cursor: grab;
+            transition: transform 0.2s ease, opacity 0.2s ease;
+        }
+         .preview-item--jpg {
+            aspect-ratio: 1 / 1;
+        }
+        .preview-item--word {
+            display: flex;
+            align-items: center;
+            background-color: #f8f9fa;
+            padding: 0.5rem 1rem;
+            border: 1px solid #e0e0e0;
+        }
+        .preview-item--word .word-icon {
+            font-size: 1.5rem;
+            margin-right: 0.75rem;
+        }
+        .preview-item--word .file-name {
+            flex-grow: 1;
+            text-align: left;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .preview-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+        .preview-item .page-number {
+            position: absolute;
+            top: 4px;
+            left: 4px;
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            font-size: 0.8rem;
+            font-weight: bold;
+            padding: 2px 6px;
+            border-radius: 4px;
+            pointer-events: none;
+        }
+        .preview-item.dragging {
+            opacity: 0.4;
+            transform: scale(1.05);
+        }
+        .delete-btn {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            width: 20px;
+            height: 20px;
+            background-color: rgba(0, 0, 0, 0.6);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 14px;
+            font-weight: bold;
+            line-height: 1;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            z-index: 10;
+        }
+        .delete-btn:hover {
+            background-color: rgba(220, 53, 69, 0.9);
+        }
+
+        .submit-btn {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 0.8rem 1.5rem;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            transition: background-color 0.2s;
+            margin-top: 1.5rem;
+        }
+
+        .message { margin-top: 1.5rem; padding: 0.8rem; border-radius: 8px; font-weight: 500; }
+        .message.info { background-color: #e7f3fe; color: #004085; }
+        .message.success { background-color: #d4edda; color: #155724; }
+        .message.error { background-color: #f8d7da; color: #721c24; }
+
+        #downloadLink {
+            display: block; margin-top: 1rem; background-color: #28a745; color: white;
+            padding: 0.8rem 1.5rem; border-radius: 8px; text-decoration: none;
+            font-weight: 600; transition: background-color 0.2s;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Секция выбора инструмента -->
+        <div id="tool-selection">
+            <h1>Выберите инструмент</h1>
+            <p>Конвертируйте ваши файлы в PDF легко и быстро.</p>
+            <div class="tool-grid">
+                <div class="tool-card" onclick="showConverter('jpg-converter')">
+                    <div class="tool-icon">🖼️</div>
+                    <h3>JPG в PDF</h3>
+                </div>
+                <div class="tool-card" onclick="showConverter('word-converter')">
+                    <div class="tool-icon">📄</div>
+                    <h3>Word в PDF</h3>
+                </div>
+            </div>
+        </div>
+
+        <!-- Секция конвертера JPG -->
+        <div id="jpg-converter" class="converter-section">
+            <a class="back-button" onclick="showToolSelection()">← Назад</a>
+            <h2>Объединить JPG в PDF</h2>
+            <p>Выберите несколько JPG, а затем измените их порядок.</p>
+            <form id="jpg-form">
+                <label for="jpg-files" class="upload-area">
+                    <div class="upload-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg></div>
+                    <div class="upload-text">Нажмите или перетащите JPG файлы</div>
+                </label>
+                <div id="jpg-preview-grid" class="preview-grid preview-grid--jpg" style="display: none;"></div>
+                <input type="file" id="jpg-files" accept="image/jpeg,image/jpg" multiple>
+                <button type="submit" class="submit-btn">Конвертировать JPG</button>
+            </form>
+        </div>
+
+        <!-- Секция конвертера Word -->
+        <div id="word-converter" class="converter-section">
+            <a class="back-button" onclick="showToolSelection()">← Назад</a>
+            <h2>Объединить Word в PDF</h2>
+            <p>Выберите несколько Word файлов, а затем измените их порядок.</p>
+            <form id="word-form">
+                <label for="word-file" class="upload-area">
+                     <div class="upload-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg></div>
+                    <div class="upload-text">Нажмите или перетащите Word файлы</div>
+                </label>
+                <div id="word-preview-grid" class="preview-grid preview-grid--word" style="display: none;"></div>
+                <input type="file" id="word-file" accept=".doc,.docx" multiple>
+                <button type="submit" class="submit-btn">Конвертировать Word</button>
+            </form>
+        </div>
+
+        <div id="message" class="message" style="display: none;"></div>
+        <a href="#" id="downloadLink" style="display: none;" download></a>
+    </div>
+
+    <script>
+        // Глобальные переменные
+        const toolSelection = document.getElementById('tool-selection');
+        const messageDiv = document.getElementById('message');
+        const downloadLink = document.getElementById('downloadLink');
+        let dragSrcEl = null;
+
+        // Навигация
+        function showConverter(converterId) {
+            toolSelection.style.display = 'none';
+            document.getElementById(converterId).style.display = 'block';
+            messageDiv.style.display = 'none';
+            downloadLink.style.display = 'none';
+        }
+        function showToolSelection() {
+            document.querySelectorAll('.converter-section').forEach(el => el.style.display = 'none');
+            toolSelection.style.display = 'block';
+        }
+
+        // --- Общая логика для перетаскивания ---
+        function handleDragStart(e) {
+            dragSrcEl = e.target;
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/html', e.target.outerHTML); // Важно для Firefox
+            setTimeout(() => e.target.classList.add('dragging'), 0);
+        }
+        function handleDragOver(e) { e.preventDefault(); }
+        function handleDragEnd(e) { e.target.classList.remove('dragging'); }
+        function createDropHandler(orderedFiles, updatePreviewFn) {
+            return function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                const dropTarget = e.target.closest('.preview-item');
+                if (dragSrcEl && dropTarget && dragSrcEl !== dropTarget) {
+                    const srcIndex = parseInt(dragSrcEl.dataset.index);
+                    const targetIndex = parseInt(dropTarget.dataset.index);
+                    const [removed] = orderedFiles.splice(srcIndex, 1);
+                    orderedFiles.splice(targetIndex, 0, removed);
+                    updatePreviewFn();
+                }
+                return false;
+            }
+        }
+
+        function setupDragAndDropUpload(converter) {
+            const uploadArea = converter.form.querySelector('.upload-area');
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                uploadArea.addEventListener(eventName, e => { e.preventDefault(); e.stopPropagation(); }, false);
+            });
+            ['dragenter', 'dragover'].forEach(eventName => {
+                uploadArea.addEventListener(eventName, () => uploadArea.classList.add('dragover'), false);
+            });
+            ['dragleave', 'drop'].forEach(eventName => {
+                uploadArea.addEventListener(eventName, () => uploadArea.classList.remove('dragover'), false);
+            });
+            uploadArea.addEventListener('drop', e => {
+                converter.input.files = e.dataTransfer.files;
+                const event = new Event('change');
+                converter.input.dispatchEvent(event);
+            }, false);
+        }
+
+        // --- Логика для JPG конвертера ---
+        const jpgConverter = {
+            form: document.getElementById('jpg-form'),
+            input: document.getElementById('jpg-files'),
+            previewGrid: document.getElementById('jpg-preview-grid'),
+            orderedFiles: [],
+
+            init() {
+                this.input.addEventListener('change', () => {
+                    this.orderedFiles = Array.from(this.input.files);
+                    this.updatePreview();
+                });
+                this.form.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    handleUpload(this.form, this.orderedFiles, '/api/v1/convert-jpg', 'files');
+                });
+                setupDragAndDropUpload(this);
+            },
+            updatePreview() {
+                this.previewGrid.innerHTML = '';
+                if (this.orderedFiles.length === 0) {
+                    this.previewGrid.style.display = 'none';
+                    return;
+                }
+                this.previewGrid.style.display = 'grid';
+                const isDraggable = this.orderedFiles.length > 1;
+
+                this.orderedFiles.forEach((file, index) => {
+                    const item = document.createElement('div');
+                    item.className = 'preview-item preview-item--jpg';
+                    item.draggable = isDraggable;
+                    item.style.cursor = isDraggable ? 'grab' : 'default';
+                    item.dataset.index = index;
+
+                    const pageNumberHtml = isDraggable ? `<span class="page-number">${index + 1}</span>` : '';
+                    item.innerHTML = `
+                        <button class="delete-btn" title="Удалить">&times;</button>
+                        <img alt="${file.name}">
+                        ${pageNumberHtml}
+                    `;
+
+                    this.previewGrid.appendChild(item);
+                    const reader = new FileReader();
+                    reader.onload = (e) => { item.querySelector('img').src = e.target.result; };
+                    reader.readAsDataURL(file);
+                });
+                this.addEventListeners();
+            },
+            addEventListeners() {
+                const isDraggable = this.orderedFiles.length > 1;
+                this.previewGrid.querySelectorAll('.preview-item').forEach(item => {
+                    if (isDraggable) {
+                        item.addEventListener('dragstart', handleDragStart);
+                        item.addEventListener('dragover', handleDragOver);
+                        item.addEventListener('drop', createDropHandler(this.orderedFiles, () => this.updatePreview()));
+                        item.addEventListener('dragend', handleDragEnd);
+                    }
+                    item.querySelector('.delete-btn').addEventListener('click', () => {
+                        const indexToRemove = parseInt(item.dataset.index);
+                        this.orderedFiles.splice(indexToRemove, 1);
+                        if (this.orderedFiles.length === 0) this.input.value = '';
+                        this.updatePreview();
+                    });
+                });
+            }
+        };
+        jpgConverter.init();
+
+        // --- Логика для Word конвертера ---
+        const wordConverter = {
+            form: document.getElementById('word-form'),
+            input: document.getElementById('word-file'),
+            previewGrid: document.getElementById('word-preview-grid'),
+            orderedFiles: [],
+
+            init() {
+                this.input.addEventListener('change', () => {
+                    this.orderedFiles = Array.from(this.input.files);
+                    this.updatePreview();
+                });
+                this.form.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    handleUpload(this.form, this.orderedFiles, '/api/v1/convert-word', 'files');
+                });
+                setupDragAndDropUpload(this);
+            },
+            updatePreview() {
+                this.previewGrid.innerHTML = '';
+                 if (this.orderedFiles.length === 0) {
+                    this.previewGrid.style.display = 'none';
+                    return;
+                }
+                this.previewGrid.style.display = 'grid';
+                const isDraggable = this.orderedFiles.length > 1;
+
+                this.orderedFiles.forEach((file, index) => {
+                    const item = document.createElement('div');
+                    item.className = 'preview-item preview-item--word';
+                    item.draggable = isDraggable;
+                    item.style.cursor = isDraggable ? 'grab' : 'default';
+                    item.dataset.index = index;
+                    item.innerHTML = `
+                        <button class="delete-btn" title="Удалить">&times;</button>
+                        <span class="word-icon">📄</span>
+                        <span class="file-name">${file.name}</span>
+                    `;
+                    this.previewGrid.appendChild(item);
+                });
+                this.addEventListeners();
+            },
+            addEventListeners() {
+                const isDraggable = this.orderedFiles.length > 1;
+                this.previewGrid.querySelectorAll('.preview-item').forEach(item => {
+                     if (isDraggable) {
+                        item.addEventListener('dragstart', handleDragStart);
+                        item.addEventListener('dragover', handleDragOver);
+                        item.addEventListener('drop', createDropHandler(this.orderedFiles, () => this.updatePreview()));
+                        item.addEventListener('dragend', handleDragEnd);
+                    }
+                    item.querySelector('.delete-btn').addEventListener('click', () => {
+                        const indexToRemove = parseInt(item.dataset.index);
+                        this.orderedFiles.splice(indexToRemove, 1);
+                        if (this.orderedFiles.length === 0) this.input.value = '';
+                        this.updatePreview();
+                    });
+                });
+            }
+        };
+        wordConverter.init();
+
+        // --- Общая функция для отправки ---
+        async function handleUpload(form, files, endpoint, filesKey) {
+            if (files.length === 0) {
+                displayMessage('Ошибка: Пожалуйста, выберите файл(ы).', 'error');
+                return;
+            }
+
+            const submitButton = form.querySelector('.submit-btn');
+            submitButton.disabled = true;
+            submitButton.textContent = 'Обработка...';
+            displayMessage('Загрузка и конвертация...', 'info');
+            downloadLink.style.display = 'none';
+
+            const formData = new FormData();
+            for (const file of files) { formData.append(filesKey, file); }
+
+            try {
+                const response = await fetch(endpoint, { method: 'POST', body: formData });
+                const result = await response.json();
+                if (!response.ok) { throw new Error(result.detail || 'Неизвестная ошибка сервера.'); }
+                displayMessage('Файл успешно создан!', 'success');
+                downloadLink.href = result.download_url;
+                downloadLink.textContent = `Скачать ${result.filename}`;
+                downloadLink.style.display = 'block';
+            } catch (error) {
+                displayMessage(`Ошибка: ${error.message}`, 'error');
+            } finally {
+                submitButton.disabled = false;
+                submitButton.textContent = `Конвертировать ${endpoint.includes('jpg') ? 'JPG' : 'Word'}`;
+            }
+        }
+
+        function displayMessage(text, type) {
+            messageDiv.textContent = text;
+            messageDiv.className = `message ${type}`;
+            messageDiv.style.display = 'block';
+        }
+    </script>
+</body>
+</html>
+
