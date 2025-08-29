@@ -17,22 +17,30 @@ WORKDIR /app
 # Step 5: Copy requirements file
 COPY requirements.txt .
 
-# Step 6: Upgrade pip, install dependencies, AND VERIFY the installation
-# The --progress-bar off flag is critical.
-# The `python -c "import gunicorn"` command will cause the build to fail if gunicorn is not installed.
-RUN python -m pip install --no-cache-dir --upgrade pip && \
-    python -m pip install --no-cache-dir --progress-bar off -r requirements.txt && \
-    python -c "import gunicorn"
+# --- DEBUGGING STEPS ---
+# We are splitting the installation into multiple steps to pinpoint the exact failure.
 
-# Step 7: Copy the application code
+# Step 6: Upgrade pip
+RUN python -m pip install --no-cache-dir --upgrade pip
+
+# Step 7: Install Python dependencies from requirements.txt
+# If the build fails here, the error will be specific to the problematic package.
+RUN python -m pip install --no-cache-dir --progress-bar off -r requirements.txt
+
+# Step 8: Verify gunicorn installation after all other packages are installed
+RUN python -c "import gunicorn"
+
+# --- END DEBUGGING STEPS ---
+
+# Step 9: Copy the application code
 COPY . .
 
-# Step 8: Create the downloads directory
+# Step 10: Create the downloads directory
 RUN mkdir -p /app/downloads
 
-# Step 9: Expose the port
+# Step 11: Expose the port
 EXPOSE 8000
 
-# Step 10: Define the command to run the application
+# Step 12: Define the command to run the application
 CMD ["python", "-m", "gunicorn", "--workers", "4", "--worker-class", "uvicorn.workers.UvicornWorker", "--bind", "0.0.0.0:8000", "main:app"]
 
