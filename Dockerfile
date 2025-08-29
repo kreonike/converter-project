@@ -25,7 +25,7 @@ RUN mkdir -p /app/downloads
 # Step 8: Expose the port
 EXPOSE 8000
 
-# Step 9: Define the command to run the application using the full path
-# This is the exact path you found using "which gunicorn".
-CMD ["/usr/local/bin/gunicorn", "--workers", "4", "--worker-class", "uvicorn.workers.UvicornWorker", "--bind", "0.0.0.0:8000", "main:app"]
+# Step 9: Define the command to run the application
+# This runs gunicorn as a module, which we have verified works during interactive debugging.
+CMD ["python", "-m", "gunicorn", "--workers", "4", "--worker-class", "uvicorn.workers.UvicornWorker", "--bind", "0.0.0.0:8000", "main:app"]
 
