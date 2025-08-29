@@ -23,7 +23,6 @@ USER appuser
 # Step 8: Expose the port the app runs on
 EXPOSE 8000
 
-# Step 9: Define the command to run the application using the full path
-# Это измененная строка, которая решает проблему
-CMD ["/usr/local/bin/gunicorn", "--workers", "4", "--worker-class", "uvicorn.workers.UvicornWorker", "--bind", "0.0.0.0:8000", "main:app"]
+# Step 9: Define the command to run the application as a Python module (most reliable method)
+CMD ["python", "-m", "gunicorn", "--workers", "4", "--worker-class", "uvicorn.workers.UvicornWorker", "--bind", "0.0.0.0:8000", "main:app"]
 
