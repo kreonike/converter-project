@@ -11,10 +11,12 @@ WORKDIR /app
 # Step 4: Copy requirements file
 COPY requirements.txt .
 
-# Step 5: Upgrade pip and install dependencies with the progress bar DISABLED
-# This is the key fix for the "can't start new thread" error discovered during debugging.
+# Step 5: Upgrade pip, install dependencies, AND VERIFY the installation
+# The --progress-bar off flag is critical to prevent the "can't start new thread" error.
+# The `python -c "import gunicorn"` command will cause the build to fail if gunicorn is not installed.
 RUN python -m pip install --no-cache-dir --upgrade pip && \
-    python -m pip install --no-cache-dir --progress-bar off -r requirements.txt
+    python -m pip install --no-cache-dir --progress-bar off -r requirements.txt && \
+    python -c "import gunicorn"
 
 # Step 6: Copy the application code
 COPY . .
@@ -26,6 +28,6 @@ RUN mkdir -p /app/downloads
 EXPOSE 8000
 
 # Step 9: Define the command to run the application
-# This runs gunicorn as a module, which we have verified works during interactive debugging.
+# This runs gunicorn as a module, which we have verified works.
 CMD ["python", "-m", "gunicorn", "--workers", "4", "--worker-class", "uvicorn.workers.UvicornWorker", "--bind", "0.0.0.0:8000", "main:app"]
 
