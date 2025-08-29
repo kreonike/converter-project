@@ -23,24 +23,26 @@ COPY requirements.txt .
 # Step 6: Upgrade pip
 RUN python -m pip install --no-cache-dir --upgrade pip
 
-# Step 7: Install Python dependencies from requirements.txt
-# If the build fails here, the error will be specific to the problematic package.
+# Step 7: Install gunicorn separately to isolate potential issues.
+RUN python -m pip install --no-cache-dir --progress-bar off gunicorn
+
+# Step 8: Install the rest of the dependencies from requirements.txt
 RUN python -m pip install --no-cache-dir --progress-bar off -r requirements.txt
 
-# Step 8: Verify gunicorn installation after all other packages are installed
+# Step 9: Verify gunicorn is still installed correctly
 RUN python -c "import gunicorn"
 
 # --- END DEBUGGING STEPS ---
 
-# Step 9: Copy the application code
+# Step 10: Copy the application code
 COPY . .
 
-# Step 10: Create the downloads directory
+# Step 11: Create the downloads directory
 RUN mkdir -p /app/downloads
 
-# Step 11: Expose the port
+# Step 12: Expose the port
 EXPOSE 8000
 
-# Step 12: Define the command to run the application
+# Step 13: Define the command to run the application
 CMD ["python", "-m", "gunicorn", "--workers", "4", "--worker-class", "uvicorn.workers.UvicornWorker", "--bind", "0.0.0.0:8000", "main:app"]
 
